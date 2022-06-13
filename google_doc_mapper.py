@@ -1,4 +1,5 @@
 import os.path
+import string
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -51,6 +52,15 @@ class GoogleDocMapper:
                 entries.append(self._read_paragraph_element(elem))
 
         return [entries, heading_indexes]
+
+    def remove_newlines(self, entries):
+        """
+            Removes any entries from a Google Doc which are just newlines
+            Args:
+                entries: The individual entries from the Doc
+        """
+
+        return [entry for entry in entries if entry != "\n"]
 
     def _get_credentials(self):
         """Gets the login credentials for the Google Doc"""

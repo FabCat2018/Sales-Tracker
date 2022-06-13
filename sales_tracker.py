@@ -3,7 +3,6 @@ from __future__ import print_function
 import re
 
 from google_doc_mapper import GoogleDocMapper
-
 # The ID of a sample document.
 DOCUMENT_ID = '1EDpqzYphtaxSEcgQ6RBrkLehytIMaHePPSvxyO68Em0'
 
@@ -11,11 +10,12 @@ DOCUMENT_ID = '1EDpqzYphtaxSEcgQ6RBrkLehytIMaHePPSvxyO68Em0'
 class SalesTracker:
     def run(self):
         ### Get games we are interested in from Google Doc ###
-        games_of_interest = self.getGamesFromDoc()
+        games_of_interest = self._gate_games_from_doc()
         print(games_of_interest)
 
         ### Scrape webpage for list of games on sale ###
-        # games_on_sale = getGamesOnSale()
+        games_on_sale = self._get_games_on_sale()
+        print(games_on_sale)
 
         ### Find the intersection of both lists ###
         # intersection = ...
@@ -26,7 +26,7 @@ class SalesTracker:
 
         ### Extension: Allow budget to be set for max game on sale can cost ###
 
-    def getGamesFromDoc(self):
+    def _gate_games_from_doc(self):
         """Gets the list of 'To Play' games from the Google Doc"""
 
         # Get the raw content from the Google Doc
@@ -34,8 +34,7 @@ class SalesTracker:
         raw_content = mapper.get_doc_content(DOCUMENT_ID)
 
         # Remove all empty entries from raw_content, only keeping paragraphs
-        all_paragraphs = [
-            game for game in raw_content if "paragraph" in game]
+        all_paragraphs = [game for game in raw_content if "paragraph" in game]
 
         [games, heading_indexes] = mapper.map_to_entries_and_headings(
             all_paragraphs)
@@ -43,9 +42,8 @@ class SalesTracker:
         # Structure of doc means "To Play" games are always at the start
         games_to_play = games[heading_indexes[0] + 1: heading_indexes[1]]
 
-        # Remove all entries which are line breaks
-        games_to_play_no_whitespace = [
-            game for game in games_to_play if game != "\n"]
+        # Remove all entries which are just whitespace
+        games_to_play_no_whitespace = mapper.remove_newlines(games_to_play)
 
         # Remove undesirable characters from game titles
         sanitised_games_to_play = []
