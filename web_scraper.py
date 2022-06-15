@@ -7,6 +7,7 @@ class WebScraper:
     def get_webpage(self, url):
         """
             Gets the content of the specified webpage as a BS4 object
+
             Args:
                 url: The URL of the webpage to get content from
         """
@@ -20,6 +21,7 @@ class WebScraper:
     def get_first_matching_element(self, soup, tag, attrs):
         """
             Gets the first element of 'soup' which matches 'tag' and 'attrs', as a new BS4 object
+
             Args:
                 soup: A BS4 object
                 tag: The element type to match against
@@ -31,7 +33,7 @@ class WebScraper:
     def get_all_matching_elements(self, soup, tag, attrs):
         """
             Gets a list of elements from 'soup' which match 'tag' and 'attrs'
-            
+
             Args:
                 soup: A BS4 object
                 tag: The element type to match against, a string
@@ -43,6 +45,7 @@ class WebScraper:
     def get_next_sibling(self, element):
         """
             Gets the next element on the same level as 'element', as a new BS4 object
+
             Args:
                 element: A BS4 object
         """
@@ -52,6 +55,7 @@ class WebScraper:
     def get_elements_by_selector(self, soup, selector):
         """
             Gets a list of elements from 'soup' which match 'selector'
+
             Args:
                 soup: A BS4 object
                 selector: The CSS selector to match against, a string
