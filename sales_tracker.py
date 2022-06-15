@@ -3,6 +3,8 @@ from __future__ import print_function
 import re
 
 from google_doc_mapper import GoogleDocMapper
+from web_scraper import WebScraper
+
 # The ID of a sample document.
 DOCUMENT_ID = '1EDpqzYphtaxSEcgQ6RBrkLehytIMaHePPSvxyO68Em0'
 
@@ -10,14 +12,17 @@ DOCUMENT_ID = '1EDpqzYphtaxSEcgQ6RBrkLehytIMaHePPSvxyO68Em0'
 class SalesTracker:
     def run(self):
         ### Get games we are interested in from Google Doc ###
-        games_of_interest = self._gate_games_from_doc()
-        print(games_of_interest)
+        games_of_interest = self._get_games_from_doc()
+        # print(games_of_interest)
 
         ### Scrape webpage for list of games on sale ###
         games_on_sale = self._get_games_on_sale()
         print(games_on_sale)
 
         ### Find the intersection of both lists ###
+
+        # Important: Remove colons, (TM) and (R) sybmols from both lists' entries
+
         # intersection = ...
 
         ### Send intersection via email, including links to purchase games ###
@@ -26,7 +31,7 @@ class SalesTracker:
 
         ### Extension: Allow budget to be set for max game on sale can cost ###
 
-    def _gate_games_from_doc(self):
+    def _get_games_from_doc(self):
         """Gets the list of 'To Play' games from the Google Doc"""
 
         # Get the raw content from the Google Doc
@@ -53,6 +58,43 @@ class SalesTracker:
             sanitised_games_to_play.append(re.sub(pattern, "", game_title))
 
         return sanitised_games_to_play
+
+    def _get_games_on_sale(self):
+        """Gets the list of games on sale from desired sites"""
+
+        ### Extension: Method to retrieve latest Sales pages from sites' main page ###
+
+        # Get the raw webpage from the URL
+        web_scraper = WebScraper()
+        raw_page = web_scraper.get_webpage(
+            "https://www.trueachievements.com/n49955/xbox-deals-unlocked-sale-e3-summer-game-fest-2022")
+
+        # Find the sections on the page to scrape
+        sections_of_interest = ["Xbox One Bundles & Special Editions", "Xbox One Games", "Xbox One DLC",
+                                "Xbox 360 (backwards compatible) Games",
+                                "Xbox 360 (backwards compatible) DLC"]
+
+        sections = web_scraper.get_all_matching_elements(raw_page, "h3", {})
+        section_names = [section.text for section in sections]
+        sections_to_scrape = list(set(sections_of_interest) & set(section_names))
+
+        # Scrape sections for games
+        games_on_sale = []
+        for section in sections_to_scrape:
+            section_header = web_scraper.get_first_matching_element(
+                raw_page, "h3", {"string": section})
+
+            section_sales_div = web_scraper.get_next_sibling(section_header)
+            table_rows = web_scraper.get_elements_by_selector(section_sales_div, "table > tbody > tr")
+
+            ### Extension: Add prices into result set, as on same row ###
+
+            for row in table_rows:
+                web_scraper.get_first_matching_element(row, "td", {})
+                game_titles = row.find("td").find_all("a")
+                games_on_sale.extend([title.text for title in game_titles])
+
+        return games_on_sale
 
 
 sales_tracker = SalesTracker()

@@ -2,5 +2,6 @@ __pycache__/
 Include/
 Lib/
 Scripts/
+.vscode/
 
 token.json
