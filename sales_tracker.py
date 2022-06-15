@@ -21,8 +21,16 @@ class SalesTracker:
         formatted_games_of_interest = self._format_game_strings(
             games_of_interest)
         formatted_games_on_sale = self._format_game_strings(games_on_sale)
-        intersection = list(set(formatted_games_of_interest)
-                            & set(formatted_games_on_sale))
+        full_matches = set(formatted_games_of_interest) & set(
+            formatted_games_on_sale)
+
+        partial_matches = set()
+        for game_to_buy_title in formatted_games_of_interest:
+            for game_on_sale_title in formatted_games_on_sale:
+                if game_to_buy_title in game_on_sale_title:
+                    partial_matches.add(game_on_sale_title)
+
+        intersection = list(set(full_matches | partial_matches))
         print(intersection)
 
         ### Send intersection via email, including links to purchase games ###
@@ -67,7 +75,7 @@ class SalesTracker:
         # Get the raw webpage from the URL
         web_scraper = WebScraper()
         raw_page = web_scraper.get_webpage(
-            "https://www.trueachievements.com/n49955/xbox-deals-unlocked-sale-e3-summer-game-fest-2022")
+            "https://www.trueachievements.com/n50039/xbox-sale-roundup-june-14th-2022")
 
         # Find the sections on the page to scrape
         sections_of_interest = ["Xbox One Bundles & Special Editions", "Xbox One Games", "Xbox One DLC",
