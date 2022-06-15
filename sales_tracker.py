@@ -13,17 +13,17 @@ class SalesTracker:
     def run(self):
         ### Get games we are interested in from Google Doc ###
         games_of_interest = self._get_games_from_doc()
-        # print(games_of_interest)
 
         ### Scrape webpage for list of games on sale ###
         games_on_sale = self._get_games_on_sale()
-        print(games_on_sale)
 
         ### Find the intersection of both lists ###
-
-        # Important: Remove colons, (TM) and (R) sybmols from both lists' entries
-
-        # intersection = ...
+        formatted_games_of_interest = self._format_game_strings(
+            games_of_interest)
+        formatted_games_on_sale = self._format_game_strings(games_on_sale)
+        intersection = list(set(formatted_games_of_interest)
+                            & set(formatted_games_on_sale))
+        print(intersection)
 
         ### Send intersection via email, including links to purchase games ###
 
@@ -76,7 +76,8 @@ class SalesTracker:
 
         sections = web_scraper.get_all_matching_elements(raw_page, "h3", {})
         section_names = [section.text for section in sections]
-        sections_to_scrape = list(set(sections_of_interest) & set(section_names))
+        sections_to_scrape = list(
+            set(sections_of_interest) & set(section_names))
 
         # Scrape sections for games
         games_on_sale = []
@@ -85,7 +86,8 @@ class SalesTracker:
                 raw_page, "h3", {"string": section})
 
             section_sales_div = web_scraper.get_next_sibling(section_header)
-            table_rows = web_scraper.get_elements_by_selector(section_sales_div, "table > tbody > tr")
+            table_rows = web_scraper.get_elements_by_selector(
+                section_sales_div, "table > tbody > tr")
 
             ### Extension: Add prices into result set, as on same row ###
 
@@ -95,6 +97,46 @@ class SalesTracker:
                 games_on_sale.extend([title.text for title in game_titles])
 
         return games_on_sale
+
+    def _format_game_strings(self, collection):
+        """
+            Formats all strings in 'collection'
+
+            Args:
+                collection: The collection to format; iterable
+        """
+
+        collection_stripped = self._strip_characters(collection)
+        return self._replace_quotes(collection_stripped)
+
+    def _strip_characters(self, collection):
+        """
+            Strips undesirable characters from all strings in 'collection'
+
+            Args:
+                collection: The collection to remove characters from; iterable
+        """
+
+        return list(
+            map(
+                lambda entry: entry.replace(u"\u00a9", "")
+                .replace(u"\u00ae", "")
+                .replace(u"\u2117", "")
+                .replace(u"\u2120", "")
+                .replace(u"\u2122", ""),
+                collection
+            )
+        )
+
+    def _replace_quotes(self, collection):
+        """
+            Standardises quotes for all strings in 'collection'
+
+            Args:
+                collection: The collection to change quotes for; iterable
+        """
+
+        return list(map(lambda entry: entry.replace("'", "’"), collection))
 
 
 sales_tracker = SalesTracker()
