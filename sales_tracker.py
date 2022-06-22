@@ -5,7 +5,7 @@ import re
 from google_doc_mapper import GoogleDocMapper
 from web_scraper import WebScraper
 
-# The ID of a sample document.
+# The ID of the Google Doc
 DOCUMENT_ID = '1EDpqzYphtaxSEcgQ6RBrkLehytIMaHePPSvxyO68Em0'
 
 
@@ -70,12 +70,21 @@ class SalesTracker:
     def _get_games_on_sale(self):
         """Gets the list of games on sale from desired sites"""
 
-        ### Extension: Method to retrieve latest Sales pages from sites' main page ###
-
-        # Get the raw webpage from the URL
+        website_url = "https://www.trueachievements.com"
         web_scraper = WebScraper()
-        raw_page = web_scraper.get_webpage(
-            "https://www.trueachievements.com/n50039/xbox-sale-roundup-june-14th-2022")
+
+        # Get the URL of the latest sales page
+        start_page = web_scraper.get_webpage(website_url)
+        articles = web_scraper.get_elements_by_selector(
+            start_page, "article > a")
+        article_names = list(map(
+            lambda article: {"title": article.get_text(), "link": article["href"]}, articles))
+        sales_articles = list(filter(
+            lambda article: "sale round-up" in article["title"].lower(), article_names))
+        sales_page_url = website_url + sales_articles[0]["link"]
+
+        # Get the raw webpage from the latest sales page URL
+        raw_page = web_scraper.get_webpage(sales_page_url)
 
         # Find the sections on the page to scrape
         sections_of_interest = ["Xbox One Bundles & Special Editions", "Xbox One Games", "Xbox One DLC",
