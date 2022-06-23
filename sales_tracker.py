@@ -16,17 +16,19 @@ class SalesTracker:
 
         ### Scrape webpage for list of games on sale ###
         games_on_sale = self._get_games_on_sale()
+        games_on_sale_titles = [game["title"] for game in games_on_sale]
 
         ### Find the intersection of both lists ###
         formatted_games_of_interest = self._format_game_strings(
             games_of_interest)
-        formatted_games_on_sale = self._format_game_strings(games_on_sale)
+        formatted_games_on_sale_titles = self._format_game_strings(
+            games_on_sale_titles)
         full_matches = set(formatted_games_of_interest) & set(
-            formatted_games_on_sale)
+            formatted_games_on_sale_titles)
 
         partial_matches = set()
         for game_to_buy_title in formatted_games_of_interest:
-            for game_on_sale_title in formatted_games_on_sale:
+            for game_on_sale_title in formatted_games_on_sale_titles:
                 if game_to_buy_title in game_on_sale_title:
                     partial_matches.add(game_on_sale_title)
 
@@ -106,12 +108,24 @@ class SalesTracker:
             table_rows = web_scraper.get_elements_by_selector(
                 section_sales_div, "table > tbody > tr")
 
-            ### Extension: Add prices into result set, as on same row ###
-
             for row in table_rows:
-                web_scraper.get_first_matching_element(row, "td", {})
-                game_titles = row.find("td").find_all("a")
-                games_on_sale.extend([title.text for title in game_titles])
+                title_cell = web_scraper.get_first_matching_element(
+                    row, "td", {})
+                game_titles = web_scraper.get_all_matching_elements(
+                    title_cell, "a", {})
+
+                price_cell = web_scraper.get_first_matching_element(
+                    row, "td", {"class_": "price"})
+                price_button = web_scraper.get_first_matching_element(
+                    price_cell, "a", {})
+                game_price = web_scraper.get_first_matching_element(
+                    price_button, "span", {"class_": "spnRegion_2"})
+
+                games_on_sale.extend([
+                    {"title": title.text, "price": game_price,
+                        "link": price_button["href"]}
+                    for title in game_titles
+                ])
 
         return games_on_sale
 
@@ -134,16 +148,12 @@ class SalesTracker:
                 collection: The collection to remove characters from; iterable
         """
 
-        return list(
-            map(
-                lambda entry: entry.replace(u"\u00a9", "")
-                .replace(u"\u00ae", "")
-                .replace(u"\u2117", "")
-                .replace(u"\u2120", "")
-                .replace(u"\u2122", ""),
-                collection
-            )
-        )
+        def __replace_undesirables(str):
+            characters_removed = str.replace(u"\u00a9", "").replace(u"\u00ae", "").replace(
+                u"\u2022", "").replace(u"\u2117", "").replace(u"\u2120", "").replace(u"\u2122", "")
+            return re.sub(r"\x20{2,}", " ", characters_removed)
+
+        return list(map(lambda entry: __replace_undesirables(entry), collection))
 
     def _replace_quotes(self, collection):
         """
