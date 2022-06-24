@@ -23,6 +23,15 @@ class SalesTracker:
             games_of_interest)
         formatted_games_on_sale_titles = self._format_game_strings(
             games_on_sale_titles)
+
+        formatted_games_on_sale = []
+        for i in range(len(formatted_games_on_sale_titles)):
+            formatted_games_on_sale.append({
+                "title": formatted_games_on_sale_titles[i],
+                "price": games_on_sale[i]["price"],
+                "link": games_on_sale[i]["link"]
+            })
+
         full_matches = set(formatted_games_of_interest) & set(
             formatted_games_on_sale_titles)
 
@@ -32,8 +41,13 @@ class SalesTracker:
                 if game_to_buy_title in game_on_sale_title:
                     partial_matches.add(game_on_sale_title)
 
-        intersection = list(set(full_matches | partial_matches))
-        print(intersection)
+        titles_intersection = list(set(full_matches | partial_matches))
+        print(titles_intersection)
+
+        # Filter games_on_sale based on titles_intersection
+        games_to_send = list(filter(
+            lambda game: game["title"] in titles_intersection, formatted_games_on_sale))
+        print(games_to_send)
 
         ### Send intersection via email, including links to purchase games ###
 
@@ -72,11 +86,11 @@ class SalesTracker:
     def _get_games_on_sale(self):
         """Gets the list of games on sale from desired sites"""
 
-        website_url = "https://www.trueachievements.com"
+        website_url = "https://www.trueachievements.com/"
         web_scraper = WebScraper()
 
         # Get the URL of the latest sales page
-        start_page = web_scraper.get_webpage(website_url)
+        start_page = web_scraper.get_webpage(website_url + "news?size=100")
         articles = web_scraper.get_elements_by_selector(
             start_page, "article > a")
         article_names = list(map(
@@ -121,11 +135,12 @@ class SalesTracker:
                 game_price = web_scraper.get_first_matching_element(
                     price_button, "span", {"class_": "spnRegion_2"})
 
-                games_on_sale.extend([
-                    {"title": title.text, "price": game_price,
-                        "link": price_button["href"]}
-                    for title in game_titles
-                ])
+                if game_price != None:
+                    games_on_sale.extend([
+                        {"title": title.text, "price": game_price.text,
+                            "link": price_button["href"]}
+                        for title in game_titles
+                    ])
 
         return games_on_sale
 
@@ -148,12 +163,12 @@ class SalesTracker:
                 collection: The collection to remove characters from; iterable
         """
 
-        def __replace_undesirables(str):
+        def __remove_undesirables(str):
             characters_removed = str.replace(u"\u00a9", "").replace(u"\u00ae", "").replace(
                 u"\u2022", "").replace(u"\u2117", "").replace(u"\u2120", "").replace(u"\u2122", "")
             return re.sub(r"\x20{2,}", " ", characters_removed)
 
-        return list(map(lambda entry: __replace_undesirables(entry), collection))
+        return list(map(lambda entry: __remove_undesirables(entry), collection))
 
     def _replace_quotes(self, collection):
         """
