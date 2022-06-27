@@ -85,7 +85,7 @@ class SalesTracker:
                 section_sales_div, "table > tbody > tr")
 
             sales_table_results = self._scrape_sales_table(
-                web_scraper, table_rows)
+                web_scraper, table_rows, website_url)
 
             games_on_sale.extend(sales_table_results)
 
@@ -174,7 +174,7 @@ class SalesTracker:
 
         return sections_to_scrape
 
-    def _scrape_sales_table(self, web_scraper, table_rows):
+    def _scrape_sales_table(self, web_scraper, table_rows, base_url):
         """
             Returns the games from the Sales table
             Args:
@@ -202,7 +202,7 @@ class SalesTracker:
             if game_price != None:
                 sales_table_results.extend([
                     {"title": title.text, "price": game_price.text,
-                     "link": price_button["href"]}
+                     "link": base_url + price_button["href"]}
                     for title in game_titles
                 ])
 
