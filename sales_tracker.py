@@ -2,17 +2,30 @@ from __future__ import print_function
 
 import re
 
+from gmail_interface import GmailInterface
+from google_credentials_manager import GoogleCredentialsManager
 from google_doc_mapper import GoogleDocMapper
 from web_scraper import WebScraper
 
+# If modifying these scopes, delete the file token.json.
+SCOPES = ["https://www.googleapis.com/auth/documents.readonly",
+          "https://www.googleapis.com/auth/gmail.modify"]
+
 # The ID of the Google Doc
-DOCUMENT_ID = '1EDpqzYphtaxSEcgQ6RBrkLehytIMaHePPSvxyO68Em0'
+DOCUMENT_ID = "1EDpqzYphtaxSEcgQ6RBrkLehytIMaHePPSvxyO68Em0"
+
+# Email Addresses
+EMAIL_SRC = "fcataleta@gmail.com"
+EMAIL_DEST = "fcataleta@gmail.com"
 
 
 class SalesTracker:
     def run(self):
+        # Get Google login credentials
+        credentials = GoogleCredentialsManager.get_credentials(SCOPES)
+
         ### Get games we are interested in from Google Doc ###
-        games_of_interest = self._get_games_from_doc()
+        games_of_interest = self._get_games_from_doc(credentials)
 
         ### Scrape webpage for list of games on sale ###
         games_on_sale = self._get_games_on_sale()
@@ -20,9 +33,9 @@ class SalesTracker:
         ### Find the intersection of both lists ###
         games_to_send = self._find_games_intersection(
             games_of_interest, games_on_sale)
-        print(games_to_send)
 
         ### Send intersection via email, including links to purchase games ###
+        self._send_email(credentials, games_to_send)
 
         ### Extension: Run as cron job ###
 
@@ -30,12 +43,12 @@ class SalesTracker:
 
     # region  Main Methods
 
-    def _get_games_from_doc(self):
-        """Gets the list of 'To Play' games from the Google Doc"""
+    def _get_games_from_doc(self, credentials):
+        """Gets the list of "To Play" games from the Google Doc"""
 
         # Get the raw content from the Google Doc
         mapper = GoogleDocMapper()
-        raw_content = mapper.get_doc_content(DOCUMENT_ID)
+        raw_content = mapper.get_doc_content(credentials, DOCUMENT_ID)
 
         # Remove all empty entries from raw_content, only keeping paragraphs
         all_paragraphs = [game for game in raw_content if "paragraph" in game]
@@ -133,6 +146,24 @@ class SalesTracker:
 
         return games_to_send
 
+    def _send_email(self, credentials, games):
+        """
+            Sends the provided list of games to the specified destination
+            Args:
+                games: The game objects to include in the email
+        """
+
+        message = "This week's Sales include the following games of interest:\n"
+
+        for game in games:
+            message += game["title"] + ", " + \
+                game["price"] + ", " + game["link"] + "\n"
+
+        print(message)
+
+        GmailInterface.send_email(
+            credentials, EMAIL_SRC, EMAIL_DEST, "Sales Tracker", message)
+
     # endregion
 
     # region Sales Page Methods
@@ -214,7 +245,7 @@ class SalesTracker:
 
     def _format_game_strings(self, collection):
         """
-            Formats all strings in 'collection'
+            Formats all strings in "collection"
 
             Args:
                 collection: The collection to format; iterable
@@ -225,7 +256,7 @@ class SalesTracker:
 
     def _strip_characters(self, collection):
         """
-            Strips undesirable characters from all strings in 'collection'
+            Strips undesirable characters from all strings in "collection"
 
             Args:
                 collection: The collection to remove characters from; iterable
@@ -240,7 +271,7 @@ class SalesTracker:
 
     def _replace_quotes(self, collection):
         """
-            Standardises quotes for all strings in 'collection'
+            Standardises quotes for all strings in "collection"
 
             Args:
                 collection: The collection to change quotes for; iterable
