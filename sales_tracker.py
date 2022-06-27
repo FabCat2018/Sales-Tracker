@@ -37,8 +37,6 @@ class SalesTracker:
         ### Send intersection via email, including links to purchase games ###
         self._send_email(credentials, games_to_send)
 
-        ### Extension: Run as cron job ###
-
         ### Extension: Allow budget to be set for max game on sale can cost ###
 
     # region  Main Methods
