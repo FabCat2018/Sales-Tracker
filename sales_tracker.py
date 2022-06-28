@@ -133,7 +133,7 @@ class SalesTracker:
         partial_matches = set()
         for game_to_buy_title in formatted_games_of_interest:
             for game_on_sale_title in formatted_games_on_sale_titles:
-                if game_to_buy_title in game_on_sale_title:
+                if game_to_buy_title.lower() in game_on_sale_title.lower():
                     partial_matches.add(game_on_sale_title)
 
         titles_intersection = list(set(full_matches | partial_matches))
