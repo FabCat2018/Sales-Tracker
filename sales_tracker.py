@@ -192,7 +192,12 @@ class SalesTracker:
                 raw_page: A BS4 object representing the Sales page
         """
 
-        sections_of_interest = ["Xbox One Bundles & Special Editions", "Xbox One Games", "Xbox One DLC",
+        sections_of_interest = ["Xbox Series X|S and Xbox One Bundles & Special Editions",
+                                "Xbox Series X|S and Xbox One Games",
+                                "Xbox Series X|S and Xbox One DLC",
+                                "Xbox One Bundles & Special Editions",
+                                "Xbox One Games",
+                                "Xbox One DLC",
                                 "Xbox 360 (backwards compatible) Games",
                                 "Xbox 360 (backwards compatible) DLC"]
 
